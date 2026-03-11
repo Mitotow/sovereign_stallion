@@ -1,0 +1,11 @@
+# venv
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+share/
+
+# cache
+__pycache__/
+*.py[cod]
