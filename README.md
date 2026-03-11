@@ -2,8 +2,7 @@
 ## Récupération des sources pour développement
 Récupération du dépôt
 ```bash
-```bash
-git clone ...
+git clone git@github.com:Mitotow/sovereign_stallion.git
 ```
 Se rendre dans le projet
 ```bash
