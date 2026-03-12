@@ -23,7 +23,7 @@ class Game():
             self.screen.fill("black")
 
             if self.player:
-                self.player.run()
+                self.player.run(self.dt, self.screen)
                 self.player.draw(self.screen)
 
             pygame.display.flip()
