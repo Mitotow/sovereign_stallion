@@ -1,4 +1,5 @@
 import pygame
+from entities.player import Player
 
 
 class Game():
@@ -8,6 +9,10 @@ class Game():
         self.clock = pygame.time.Clock()
         self.dt = 0
         self.isRunning = True
+        self.player = None
+
+    def setup(self):
+        self.player = Player((0, 0))
 
     def run(self):
         while self.isRunning:
@@ -16,6 +21,10 @@ class Game():
                     self.isRunning = False
 
             self.screen.fill("black")
+
+            if self.player:
+                self.player.run()
+                self.player.draw(self.screen)
 
             pygame.display.flip()
             self.dt = self.clock.tick(60) / 1000
