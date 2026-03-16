@@ -16,7 +16,7 @@ def main():
     except getopt.error as err:
         print(str(err))
 
-    game = Game((1280, 720), debug_mode)
+    game = Game((1280, 720), debug_mode=True)
     game.setup()
     game.run()
 
