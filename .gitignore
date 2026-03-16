@@ -1,2 +1,11 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# venv
+bin/
+include/
+lib/
+lib64
+pyvenv.cfg
+share/
+
+# cache
+__pycache__/
+*.py[cod]

@@ -1,8 +1,8 @@
 # core/game.py
 import pygame
 from entities.player import Player
-from menu.main_menu import MenuPrincipal
-from core.types import LARGEUR_ECRAN, HAUTEUR_ECRAN
+from menu.main_menu import MainMenu
+import core.constants as constants
 
 
 class Game():
@@ -13,47 +13,34 @@ class Game():
         self.dt = 0
         self.isRunning = True
 
-        self.etat = "MENU"
-        self.menu = MenuPrincipal()
+        self.game_state = constants.MAIN_MENU
+        self.game_difficulty = constants.DEFAULT_DIFFICULTY
+        self.menu = MainMenu(self.screen)
         self.player = None
-        self.plateformes = []
+        self.plateforms = []
 
-        # --- NOUVEAU PARAMÈTRE ---
-        self.difficulte_jeu = None  # Sera réglée au moment de lancer le jeu
-
-    def setup(self, difficulte_choisie):
-        # On stocke la difficulté pour savoir comment configurer le niveau
-        self.difficulte_jeu = difficulte_choisie
-
-        # Tu peux utiliser la difficulté ici !
-        # Par exemple :
-        # if self.difficulte_jeu == DIFFICULTE_DIFFICILE:
-        #     self.player = Player((100, 100), vitesse_rapide=True)
-        # else:
-
-        # Pour l'instant on garde ton setup de base
+    def setup(self):
         self.player = Player(pygame.Vector2(100, 100))
 
     def run(self):
         while self.isRunning:
-            evenements = pygame.event.get()
-            for event in evenements:
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     self.isRunning = False
 
-            if self.etat == "MENU":
-                self.menu.dessiner(self.screen)
-                choix = self.menu.tester_clic()
+            if self.game_state == constants.MAIN_MENU:
+                self.menu.draw(self.screen)
+                choice = self.menu.check_click()
 
-                if choix == "JEU_SOLO":
-                    # --- NOUVEAU : ON RECUPERE LA DIFFICULTÉ ---
-                    diff = self.menu.difficulte_actuelle
-                    self.setup(diff)  # On passe le niveau choisi au setup
-                    self.etat = "JEU"
-                elif choix == "QUITTER":
+                if choice == constants.PLAYING:
+                    self.game_state = constants.PLAYING
+                    self.game_difficulty = self.menu.selected_difficulty
+                    self.setup()
+                elif choice == constants.QUIT:
                     self.isRunning = False
 
-            elif self.etat == "JEU":
+            elif self.game_state == constants.PLAYING:
                 self.screen.fill("black")
                 if self.player:
                     self.player.run(self.plateformes)
