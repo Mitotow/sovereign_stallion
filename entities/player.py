@@ -7,7 +7,7 @@ def load_player_animations():
     return {
         "IDLE": Spritesheet("assets/player/IDLE.png", 96, 96, 0.15),
         "RUN": Spritesheet("assets/player/RUN.png", 96, 96, 0.35),
-        "JUMP": Spritesheet("assets/player/JUMP.png", 96, 96, 0.15, False),
+        "JUMP": Spritesheet("assets/player/JUMP.png", 96, 96, 0.2, False),
     }
 
 
@@ -23,7 +23,7 @@ class Player(AnimableEntity):
         self.friction = 0.4
         self.max_speed = 300
         self.gravity = 2000  # Force d'attraction
-        self.f_jump = -450  # Impulsion
+        self.f_jump = -800  # Impulsion
         self.is_grounded = False
         self.is_falling = False
 
