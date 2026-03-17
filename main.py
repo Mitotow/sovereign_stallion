@@ -1,25 +1,10 @@
-import getopt
-from sys import argv
 from core.game import Game
-
-
-def main():
-    options = "d:"
-    long_options = ["debug"]
-    debug_mode = False
-
-    try:
-        args, values = getopt.getopt(argv[:1], options, long_options)
-        for currentArg, currentVal in args:
-            if currentArg in ("-d", "--debug"):
-                debug_mode = True
-    except getopt.error as err:
-        print(str(err))
-
-    game = Game((1280, 720), debug_mode=True)
-    game.setup()
-    game.run()
-
+import argparse  # Module standard pour parser les arguments
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Activer le mode debug")
+    args = parser.parse_args()
+
+    game = Game((1280, 720), debug_mode=args.debug)
+    game.run()
