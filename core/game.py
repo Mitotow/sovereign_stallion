@@ -1,7 +1,6 @@
-# core/game.py
 import pygame
 from entities.player import Player
-from menu.main_menu import MainMenu
+from ui.main_menu import MainMenu
 import core.constants as constants
 
 
@@ -43,7 +42,7 @@ class Game():
             elif self.game_state == constants.PLAYING:
                 self.screen.fill("black")
                 if self.player:
-                    self.player.run(self.plateformes)
+                    self.player.run(self.plateforms)
                     self.player.draw(self.screen)
 
             pygame.display.flip()

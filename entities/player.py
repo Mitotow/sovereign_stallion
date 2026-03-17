@@ -1,7 +1,6 @@
 
 import pygame
 from core.collision import gerer_collisions, limiter_ecran
-from core.types import LARGEUR_ECRAN, HAUTEUR_ECRAN # Ces deux là sont utiles pour limiter_ecran
 from entities.base import Entity
 
 
@@ -58,7 +57,7 @@ class Player(Entity):
 
         # Appel des fonctions de collision
         gerer_collisions(self, plateformes)
-        limiter_ecran(self, LARGEUR_ECRAN, HAUTEUR_ECRAN)
+        limiter_ecran(self, 1280, 720)
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)

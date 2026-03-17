@@ -1,10 +1,1 @@
-type Position = tuple[float, float]
-
-# core/types.py
-LARGEUR_ECRAN = 1280
-HAUTEUR_ECRAN = 720
-
-# --- NOUVEAUX REGLAGES ---
-DIFFICULTE_FACILE = 0
-DIFFICULTE_NORMALE = 1
-DIFFICULTE_DIFFICILE = 2
+type Position = tuple[int, int]

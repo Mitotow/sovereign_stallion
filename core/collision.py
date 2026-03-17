@@ -1,7 +1,3 @@
-# core/collision.py
-import pygame
-
-
 def gerer_collisions(perso, plateformes):
     # --- Horizontal ---
     perso.position.x += perso.vitesse.x
