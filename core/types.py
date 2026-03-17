@@ -1,1 +1,1 @@
-type Position = tuple[float, float]
+type Position = tuple[int, int]
