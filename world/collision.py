@@ -77,11 +77,11 @@ class CollisionSystem:
                 continue
 
             if plat.type == "solide":
-                if entity.velocity.y > 0:  # Tombe
+                if entity.velocity.y > 0:
                     entity.hb.bottom = plat.rect.top
                     entity.velocity.y = 0
                     entity.is_grounded = True
-                elif entity.velocity.y < 0:  # Monte
+                elif entity.velocity.y < 0:
                     entity.hb.top = plat.rect.bottom
                     entity.velocity.y = 0
 
