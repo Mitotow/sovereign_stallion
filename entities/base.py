@@ -81,6 +81,9 @@ class AnimableEntity(Entity):
         if self.facing_right:
             image = transform.flip(image, True, False)
         self.image = transform.scale(image, (self.rect.width, self.rect.height))
+        
+    def draw(self):
+        self.screen.blit(self.image, (self.rect.x, self.rect.y - self.current_animation.offset_y))
 
     def is_animation_ended(self):
         return int(self.frame_index) >= len(self.current_animation.frames) - 1

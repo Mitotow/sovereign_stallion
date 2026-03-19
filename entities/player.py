@@ -6,11 +6,11 @@ import core.constants as constants
 
 def load_player_animations():
     return {
-        constants.IDLE: Spritesheet("assets/player/IDLE.png", 96, 96, 0.15),
-        constants.RUN: Spritesheet("assets/player/RUN.png", 96, 96, 0.35),
-        constants.JUMP: Spritesheet("assets/player/JUMP.png", 96, 96, 0.2, False),
-        constants.ATTACK: Spritesheet("assets/player/ATTACK_1.png", 96, 96, 0.3, False),
-        constants.HURT: Spritesheet("assets/player/HURT.png", 96, 96, 0.5, False)
+        constants.IDLE: Spritesheet("assets/player/IDLE.png", 96, 96, 0.15, offset_y=-40),
+        constants.RUN: Spritesheet("assets/player/RUN.png", 96, 96, 0.35, offset_y=-40),
+        constants.JUMP: Spritesheet("assets/player/JUMP.png", 96, 96, 0.2, loop=False, offset_y=-40),
+        constants.ATTACK: Spritesheet("assets/player/ATTACK_1.png", 96, 96, 0.3, loop=False, offset_y=-40),
+        constants.HURT: Spritesheet("assets/player/HURT.png", 96, 96, 0.5, loop=False, offset_y=-40)
     }
 
 
@@ -106,6 +106,3 @@ class Player(AnimableEntity):
             self.velocity.x = 0
 
         self.update_animation()
-
-    def draw(self):
-        self.screen.blit(self.image, self.rect)
