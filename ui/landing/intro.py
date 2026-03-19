@@ -7,11 +7,11 @@ class IntroCinematic:
         self.screen = screen
         self.screen_rect = screen.get_rect()
 
-        pygame.mixer.music.load("assets/audio/audiointr.mp3")
+        pygame.mixer.music.load("assets/audio/audiointro.mp3")
         self.fade_duration = 10000  # durée fondu
         self.fade_surface = pygame.Surface(self.screen_rect.size)
         self.fade_surface.fill((0, 0, 0))
-        self.original_image = pygame.image.load("assets/bg/imageintro.png").convert_alpha()
+        self.original_image = pygame.image.load("assets/ui/landing/imageintro.png").convert_alpha()
 
         self.zoom_start = 1.5
         self.zoom_end = 0.5
