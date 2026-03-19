@@ -198,7 +198,7 @@ class Game():
                   (0, 0), self.font)
         blit_text(self.screen,
                   f"vel_x={self.player.velocity.x:.2f}, vel_y={self.player.velocity.y:.2f}, "
-                  f"is_grounded={self.player.is_grounded}, is_falling={self.player.is_falling}",
+                  f"is_grounded={self.player.is_grounded}",
                   (0, 20), self.font)
         blit_text(self.screen,
                   f"current_state={self.player.current_state}, "

@@ -7,7 +7,7 @@ class LandingMenu:
         self.screen = screen
         self.screen_rect = screen.get_rect()
 
-        image_source = pygame.image.load("assets/bg/wp1.png")
+        image_source = pygame.image.load("assets/ui/landing/wp1.png")
         self.background = pygame.transform.scale(image_source, (self.screen_rect.width, self.screen_rect.height))
         self.background = self.background.convert()
 
