@@ -29,9 +29,10 @@ class Player(AnimableEntity):
         self.is_freeze = False
 
     def jump(self):
-        if self.is_grounded:
+        if self.is_grounded or self.nb_sauts < self.max_sauts:
             self.velocity.y = self.f_jump
-            self.is_grounded = False
+            self.nb_sauts += 1
+            self.is_grounded = False  # Dès qu'on saute, on n'est plus au sol
             self.set_state(constants.JUMP)
 
     def attack(self):
@@ -45,16 +46,28 @@ class Player(AnimableEntity):
 
     def handle_input(self, keys) -> int:
         h_acceleration = 0
+
+
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             h_acceleration += self.acceleration
         if keys[pygame.K_LEFT] or keys[pygame.K_q]:
             h_acceleration -= self.acceleration
+
+        # --- Logique de Saut (Double Saut) ---
+        # On vérifie Z, la flèche du haut et on peut même ajouter Espace si tu veux
+        if keys[pygame.K_UP] or keys[pygame.K_z]:
+            if not self.jump_pressed:
+                self.jump()  # Appelle la logique de saut (sol ou air)
+                self.jump_pressed = True  # Bloque l'input jusqu'au relâchement
+        else:
+            self.jump_pressed = False  # Autorise un nouveau saut quand la touche est lâchée
+
+        # --- Actions de Combat / Debug ---
         if keys[pygame.K_SPACE]:
             self.attack()
+
         if keys[pygame.K_s]:
             self.take_damage(100)
-        if keys[pygame.K_UP] or keys[pygame.K_z]:
-            self.jump()
 
         return h_acceleration
 

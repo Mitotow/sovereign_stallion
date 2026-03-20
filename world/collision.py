@@ -77,16 +77,18 @@ class CollisionSystem:
                 continue
 
             if plat.type == "solide":
-                if entity.velocity.y > 0:  # Tombe
+                if entity.velocity.y > 0:  # En train de tomber
                     entity.hb.bottom = plat.rect.top
                     entity.velocity.y = 0
                     entity.is_grounded = True
-                elif entity.velocity.y < 0:  # Monte
+                    # --- RECHARGE DES SAUTS ---
+                    entity.nb_sauts = 0
+
+                elif entity.velocity.y < 0:  # En train de monter
                     entity.hb.top = plat.rect.bottom
                     entity.velocity.y = 0
 
                 self._sync_position_from_hb(entity)
-
             elif plat.type == "traversable":
                 if entity.velocity.y > 0:
                     prev_bottom = entity.hb.bottom - entity.velocity.y * dt

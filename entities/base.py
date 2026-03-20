@@ -31,6 +31,9 @@ class Entity(sprite.Sprite):
 
         self.texture: Surface | None = None
         self.sync_hitbox()
+        self.nb_sauts = 0
+        self.max_sauts = 2
+        self.is_grounded = False
 
     def sync_hitbox(self):
         self.hb_offset = (
