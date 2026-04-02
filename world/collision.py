@@ -1,17 +1,17 @@
 import pygame
+from core.constants import SOLID
 
 
 class CollisionSystem:
     """
     Système de collision centralisé.
-    Gère la physique (gravité, déplacement) et les collisions
-    pour toute entité dynamique.
+    Gère la physique (gravité, déplacement) et les collisions.
     """
 
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
-        self.platforms = pygame.sprite.Group()    # Plateformes (solides/traversables)
-        self.dynamic = pygame.sprite.Group()      # Entités qui bougent (joueur, ennemis, projectiles)
+        self.platforms = pygame.sprite.Group()    # Plateformes
+        self.dynamic = pygame.sprite.Group()      # Entités qui se déplace
 
     def add_platform(self, *platforms):
         self.platforms.add(*platforms)
@@ -60,7 +60,7 @@ class CollisionSystem:
             if not entity.hb.colliderect(plat.rect):
                 continue
 
-            if plat.type == "solide":
+            if plat.type == SOLID:
                 if entity.velocity.x > 0:
                     entity.hb.right = plat.rect.left
                 elif entity.velocity.x < 0:
@@ -76,27 +76,16 @@ class CollisionSystem:
             if not entity.hb.colliderect(plat.rect):
                 continue
 
-            if plat.type == "solide":
-                if entity.velocity.y > 0:  # En train de tomber
+            if plat.type == SOLID:
+                if entity.velocity.y > 0:
                     entity.hb.bottom = plat.rect.top
                     entity.velocity.y = 0
                     entity.is_grounded = True
-                    # --- RECHARGE DES SAUTS ---
-                    entity.nb_sauts = 0
-
-                elif entity.velocity.y < 0:  # En train de monter
+                elif entity.velocity.y < 0:
                     entity.hb.top = plat.rect.bottom
                     entity.velocity.y = 0
 
                 self._sync_position_from_hb(entity)
-            elif plat.type == "traversable":
-                if entity.velocity.y > 0:
-                    prev_bottom = entity.hb.bottom - entity.velocity.y * dt
-                    if prev_bottom <= plat.rect.top:
-                        entity.hb.bottom = plat.rect.top
-                        entity.velocity.y = 0
-                        entity.is_grounded = True
-                        self._sync_position_from_hb(entity)
 
     def _sync_position_from_hb(self, entity):
         """Recalcule la position de l'entité à partir de la hitbox."""
@@ -106,6 +95,10 @@ class CollisionSystem:
         entity.apply_position()
 
     def _clamp_to_screen(self, entity):
+        """
+        Bloque une entité dans la surface de l'écran
+        """
+        
         w = self.screen.get_width()
         h = self.screen.get_height()
         changed = False
@@ -131,13 +124,11 @@ class CollisionSystem:
         if changed:
             self._sync_position_from_hb(entity)
 
-    # --- Utilitaires pour les interactions entre entités ---
-
     def check_overlap(self, entity_a, group) -> list:
         """
-        Retourne la liste des entités d'un groupe qui chevauchent entity_a.
-        Utile pour : dégâts, ramassage d'items, zones de trigger...
+        Retourne la liste des entités d'un groupe qui chevauchent entity_a
         """
+        
         hits = []
         for entity_b in group:
             if entity_a is not entity_b and entity_a.hb.colliderect(entity_b.hb):
@@ -146,9 +137,9 @@ class CollisionSystem:
 
     def check_group_overlap(self, group_a, group_b) -> list[tuple]:
         """
-        Retourne les paires (a, b) en collision entre deux groupes.
-        Utile pour : projectiles vs ennemis, joueur vs ennemis...
+        Retourne les paires (a, b) en collision entre deux groupes
         """
+        
         collisions = []
         for a in group_a:
             for b in group_b:

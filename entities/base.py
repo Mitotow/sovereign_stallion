@@ -65,11 +65,14 @@ class AnimableEntity(Entity):
         self.current_animation = self.animations[self.current_state]
 
     def set_state(self, state: str):
-        if self.current_state and self.current_state == state:
+        if self.is_state(state):
             return
         self.current_state = state
         self.current_animation = self.animations[self.current_state]
         self.frame_index = 0
+        
+    def is_state(self, state: str) -> bool:
+        return self.current_state and self.current_state == state
 
     def animate(self, speed_ratio=1):
         is_ended = self.is_animation_ended()
@@ -84,6 +87,9 @@ class AnimableEntity(Entity):
         if self.facing_right:
             image = transform.flip(image, True, False)
         self.image = transform.scale(image, (self.rect.width, self.rect.height))
+        
+    def draw(self):
+        self.screen.blit(self.image, (self.rect.x, self.rect.y - self.current_animation.offset_y))
 
     def is_animation_ended(self):
         return int(self.frame_index) >= len(self.current_animation.frames) - 1

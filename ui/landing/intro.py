@@ -1,17 +1,20 @@
 import pygame
 import core.constants as constants
+from ui.menu import Menu
 
+MUSIC_PATH = "assets/audio/audiointro.mp3"
+BG_PATH = "assets/ui/landing/imageintro.png"
 
-class IntroCinematic:
-    def __init__(self, screen):
+class IntroCinematic(Menu):
+    def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.screen_rect = screen.get_rect()
 
-        pygame.mixer.music.load("assets/audio/audiointro.mp3")
+        pygame.mixer.music.load(MUSIC_PATH)
         self.fade_duration = 10000  # durée fondu
         self.fade_surface = pygame.Surface(self.screen_rect.size)
         self.fade_surface.fill((0, 0, 0))
-        self.original_image = pygame.image.load("assets/ui/landing/imageintro.png").convert_alpha()
+        self.original_image = pygame.image.load(BG_PATH).convert_alpha()
 
         self.zoom_start = 1.5
         self.zoom_end = 0.5
@@ -32,6 +35,9 @@ class IntroCinematic:
         self.is_started = False
         self.finished = False
 
+    def setup(self):
+        self.start()
+
     def start(self):
         pygame.mixer.music.play()
         self.is_started = True
@@ -42,20 +48,20 @@ class IntroCinematic:
 
     def update(self):
         if not self.is_started:
-            return constants.INTRO_WAITING
+            return constants.INTRO
         
         if self.handle_key_pressed():
             pygame.mixer.music.stop()
             self.finished = True
-            return constants.INTRO_FINISHED
+            return constants.LANDING_MENU
 
         current_time = pygame.mixer.music.get_pos()
 
         if not pygame.mixer.music.get_busy() and current_time == -1:
             self.finished = True
-            return constants.INTRO_FINISHED
+            return constants.LANDING_MENU
 
-        return constants.INTRO_RUNNING
+        return constants.INTRO
 
     def draw(self):
         current_time = pygame.mixer.music.get_pos()
