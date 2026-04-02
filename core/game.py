@@ -1,6 +1,7 @@
 import pygame
 from entities.player import Player
-from core.constants import FPS
+from core.constants import FPS, WINDOW_SIZE, SOLID, TAVERSABLE
+from core.map import load_map
 from world.parallax import ParallaxSky
 from world.collision import CollisionSystem
 from world.platform import Platform
@@ -13,20 +14,20 @@ import core.constants as constants
 
 
 class Game():
-    def __init__(self, window_size, debug_mode=False, fullscreen=False):
+    def __init__(self, debug_mode=False, fullscreen=False, skip=False):
         pygame.init()
 
         self.screen: pygame.Surface
         if fullscreen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
-            self.screen = pygame.display.set_mode(window_size)
+            self.screen = pygame.display.set_mode(WINDOW_SIZE)
 
         self.debug_mode = debug_mode
         self.clock = pygame.time.Clock()
         self.dt = 0
         self.isRunning = True
-        self.game_state = constants.INTRO
+        self.game_state = constants.INTRO if not skip else constants.MAIN_MENU
         self.game_difficulty = constants.DEFAULT_DIFFICULTY
         self.sprites = pygame.sprite.Group()
 
@@ -47,7 +48,7 @@ class Game():
         self.collision_system = None
         self.sky = None
         self.font = None
-
+        
     def setup_font(self):
         pygame.font.init()
         self.font = pygame.font.SysFont('Arial', 16)
@@ -61,10 +62,10 @@ class Game():
         h = self.screen.get_height()
 
         platforms = [
-            Platform(self.screen, pygame.Vector2(0, h), (w, 20), "solide"),
-            Platform(self.screen, pygame.Vector2(200, h - 150), (200, 20), "solide"),
-            Platform(self.screen, pygame.Vector2(500, h - 300), (200, 20), "solide"),
-            Platform(self.screen, pygame.Vector2(100, h - 450), (150, 20), "traversable"),
+            Platform(self.screen, pygame.Vector2(0, h), (w, 20), SOLID),
+            Platform(self.screen, pygame.Vector2(200, h - 150), (200, 20), SOLID),
+            Platform(self.screen, pygame.Vector2(500, h - 300), (200, 20), SOLID),
+            Platform(self.screen, pygame.Vector2(100, h - 450), (150, 20), TAVERSABLE),
         ]
         
         for p in platforms:
@@ -89,6 +90,10 @@ class Game():
         self.collision_system.add_dynamic(self.player)
 
         self.create_platforms()
+        # for platform in load_map("assets/world/maps/map01.csv", self.screen):
+        #    self.collision_system.add_platform(platform)
+        #    self.platforms.add(platform)
+            
         self.sky = ParallaxSky(self.screen)
 
     def handle_playing(self):
@@ -124,9 +129,6 @@ class Game():
             proj.update(self.dt)
             if not proj.alive():
                 self.collision_system.remove(proj)
-
-        if self.debug_mode and self.font:
-            self.show_debug()
             
     def handle_menu(self):
         """
@@ -168,6 +170,7 @@ class Game():
 
             if self.game_state == constants.QUIT:
                 self.isRunning = False
+                break
             elif self.game_state == constants.PLAYING:
                 self.handle_playing()
             else:
@@ -193,6 +196,9 @@ class Game():
 
             for proj in self.projectiles:
                 proj.draw()
+            
+            if self.debug_mode and self.font:
+                self.show_debug()
         else:
             menu = self.menus[self.game_state]
             if menu:
@@ -201,11 +207,10 @@ class Game():
     def show_debug(self):
         # Hitbox / Rect du joueur
         pygame.draw.rect(self.screen, "red", self.player.hb, 2)
-        pygame.draw.rect(self.screen, "green", self.player.rect, 1)
 
         # Hitbox platformes
         for plat in self.platforms:
-            color = "red" if plat.type == "solide" else "blue"
+            color = "red" if plat.type == SOLID else "blue"
             pygame.draw.rect(self.screen, color, plat.rect, 2)
 
         # Hitbox ennemis
@@ -223,7 +228,7 @@ class Game():
                   (0, 0), self.font)
         blit_text(self.screen,
                   f"vel_x={self.player.velocity.x:.2f}, vel_y={self.player.velocity.y:.2f}, "
-                  f"is_grounded={self.player.is_grounded}",
+                  f"is_grounded={self.player.is_grounded}, is_running={self.player.is_running}",
                   (0, 20), self.font)
         blit_text(self.screen,
                   f"current_state={self.player.current_state}, "

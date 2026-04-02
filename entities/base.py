@@ -62,11 +62,14 @@ class AnimableEntity(Entity):
         self.current_animation = self.animations[self.current_state]
 
     def set_state(self, state: str):
-        if self.current_state and self.current_state == state:
+        if self.is_state(state):
             return
         self.current_state = state
         self.current_animation = self.animations[self.current_state]
         self.frame_index = 0
+        
+    def is_state(self, state: str) -> bool:
+        return self.current_state and self.current_state == state
 
     def animate(self, speed_ratio=1):
         is_ended = self.is_animation_ended()

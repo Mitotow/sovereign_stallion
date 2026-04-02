@@ -1,6 +1,6 @@
 # menu/main_menu.py
 import pygame
-from core.image.image_utils import get_image_chunks
+from core.assets.utils import get_image_chunks
 import core.constants as constants
 from ui.components.button import SelectButton, SelectButtonGroup, ImageButton
 from ui.menu import Menu
