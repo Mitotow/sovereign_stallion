@@ -36,6 +36,9 @@ class Player(AnimableEntity):
         self.f_jump = -800
         self.is_freeze = False
         self.is_running = False
+        self.nb_sauts = 0
+        self.max_sauts = 2
+        self.jump_pressed = False
         
         # DASH
         self.is_dashing = False
@@ -70,31 +73,34 @@ class Player(AnimableEntity):
     def handle_input(self, keys) -> int:
         h_acceleration = 0
 
-
+        # 1. Déplacements (tu les avais oubliés dans ton dernier message)
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             h_acceleration += self.acceleration
         if keys[pygame.K_LEFT] or keys[pygame.K_q]:
             h_acceleration -= self.acceleration
 
-        # --- Logique de Saut (Double Saut) ---
-        # On vérifie Z, la flèche du haut et on peut même ajouter Espace si tu veux
+        # 2. Logique de Saut (CE BLOC EST LE BON)
         if keys[pygame.K_UP] or keys[pygame.K_z]:
             if not self.jump_pressed:
-                self.jump()  # Appelle la logique de saut (sol ou air)
-                self.jump_pressed = True  # Bloque l'input jusqu'au relâchement
+                self.jump()
+                self.jump_pressed = True
         else:
-            self.jump_pressed = False  # Autorise un nouveau saut quand la touche est lâchée
+            self.jump_pressed = False
 
+            # 3. Autres actions
         if keys[pygame.K_SPACE]:
             self.attack()
         if keys[pygame.K_s]:
             self.take_damage(100)
-        if keys[pygame.K_UP] or keys[pygame.K_z]:
-            self.jump()
+
+        # --- ATTENTION : J'AI SUPPRIMÉ LE DEUXIÈME BLOC UP/Z ICI ---
+        # Il ne faut SURTOUT PAS remettre "if keys[pygame.K_UP]: self.jump()" ici.
+
         if keys[pygame.K_e]:
             self.heal(100)
         if keys[pygame.K_LCTRL] and self.can_dash:
             self.dash()
+
         self.is_running = keys[pygame.K_LSHIFT] and h_acceleration != 0
 
         return h_acceleration
@@ -190,11 +196,15 @@ class Player(AnimableEntity):
 
         self.animate(speed_ratio)
 
-
     def update(self, dt):
+        # On remet à zéro SEULEMENT si on est au sol
+        if self.is_grounded:
+            self.nb_sauts = 0
+
+        # Le reste du code doit être aligné ICI (en dehors du "if")
         keys = pygame.key.get_pressed()
         h_acceleration = self.handle_input(keys)
-        
+
         # Gestion spécifique de certains états
         if self.current_state in (constants.ATTACK, constants.HURT, constants.HEALING):
             if self.is_animation_ended():
