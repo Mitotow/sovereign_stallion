@@ -62,7 +62,6 @@ class Player(AnimableEntity):
         else:
             self.jump_pressed = False  # Autorise un nouveau saut quand la touche est lâchée
 
-        # --- Actions de Combat / Debug ---
         if keys[pygame.K_SPACE]:
             self.attack()
 
