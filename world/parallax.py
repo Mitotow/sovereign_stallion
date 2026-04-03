@@ -6,7 +6,7 @@ class ParallaxSky:
     def __init__(self, screen: pygame.Surface):
         self.screen_width = screen.get_width()
         self.base_path = "assets/world/sky"
-        self.speeds = [0.05, 0.1, 0.2, 0.4, 0.6]
+        self.speeds = [0.005, 0.01, 0.02, 0.04, 0.06]
 
         # Chargement de tous les layers du ciel
         self.layers = []
