@@ -1,5 +1,6 @@
 import pygame
 import os
+from core.camera import Camera
 
 
 class ParallaxSky:
@@ -16,9 +17,9 @@ class ParallaxSky:
             img = pygame.transform.scale(img, (self.screen.get_width(), self.screen.get_height()))
             self.layers.append(img)
 
-    def draw(self, camera_x):
+    def draw(self, camera: Camera):
         for i, layer in enumerate(self.layers):
             speed = self.speeds[i]
-            offset = (camera_x * speed) % self.screen.get_width()
+            offset = (camera.camera.x * speed) % self.screen.get_width()
             self.screen.blit(layer, (-offset, 0))
             self.screen.blit(layer, (self.screen.get_width() - offset, 0))

@@ -15,12 +15,13 @@ class CollisionSystem:
         self.platforms: list[Platform] = []       # Plateformes
         self.dynamic = pygame.sprite.Group()      # Entités qui se déplace
 
+
     def set_platforms(self, platforms):
         self.platforms = platforms
 
     def add_dynamic(self, *entities):
         self.dynamic.add(*entities)
-            
+
     def update(self, dt):
         for entity in self.dynamic:
             if entity.is_static:
@@ -34,11 +35,12 @@ class CollisionSystem:
 
     def _move_and_resolve(self, entity, dt):
         # Horizontal
+
         entity.position.x += entity.velocity.x * dt
         entity.apply_position()
         self._resolve_entity_vs_platforms_x(entity)
 
-        # Vertical
+        # Déplacement vertical
         entity.position.y += entity.velocity.y * dt
         entity.apply_position()
         self._resolve_entity_vs_platforms_y(entity)
@@ -84,7 +86,16 @@ class CollisionSystem:
         entity.apply_position()
 
     def _clamp_to_screen(self, entity):
+        """
+        Empêche les entités de sortir, SAUF les projectiles.
+        """
         w, h = self.screen.get_size()
+        # --- LA CORRECTION EST ICI ---
+        # Si c'est un projectile, on arrête la fonction tout de suite
+        # pour le laisser sortir et être détruit par son propre update()
+        if entity.__class__.__name__ == "Projectile":
+            return
+
         changed = False
         if entity.hb.left < 0:
             entity.hb.left = 0; entity.velocity.x = 0; changed = True
