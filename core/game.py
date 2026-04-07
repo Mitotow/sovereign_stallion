@@ -10,6 +10,7 @@ from ui.main_menu import MainMenu
 from ui.menu import Menu
 from ui.ui_utils import blit_text
 import core.constants as constants
+from entities.base import Entity
 from entities.enemy import Enemy
 
 
@@ -23,39 +24,38 @@ class Game():
         else:
             self.screen = pygame.display.set_mode(WINDOW_SIZE)
 
+        # Debug
         self.debug_mode = debug_mode
+        self.debug_entity: Entity | None = None
         self.clock = pygame.time.Clock()
         self.dt = 0
         self.isRunning = True
         self.game_state = constants.INTRO if not skip else constants.MAIN_MENU
         self.game_difficulty = constants.DEFAULT_DIFFICULTY
-        self.sprites = pygame.sprite.Group()
 
         # UI
+        self.font = None
         self.menus: dict[str, Menu] = {
             constants.INTRO: IntroCinematic(self.screen),
             constants.LANDING_MENU: LandingMenu(self.screen),
             constants.MAIN_MENU: MainMenu(self.screen),
         }
-        
         self.menus[self.game_state].setup()
 
         # Game objects
         self.player: Player = None
         self.projectiles = pygame.sprite.Group()
-        self.enemies = pygame.sprite.Group()
+        self.enemies: list[Enemy] = []
         
+        # Managers
         self.collision_system: CollisionSystem = None
         self.map_system: MapSystem = None
         
+        # World
         self.sky = None
         self.level_map = None
         self.map_image = None
         self.map_rect = None
-        self.font = None
-        
-        # Debug
-        self.debug_entity = None
         
     def setup_font(self):
         pygame.font.init()
@@ -77,7 +77,6 @@ class Game():
 
         # Joueur
         self.player = Player(self.screen, pygame.Vector2(100, 0))
-        self.sprites.add(self.player)
 
         # Système de collision
         self.collision_system = CollisionSystem(self.screen)
@@ -97,7 +96,7 @@ class Game():
         if not self.player:
             return
 
-        self.player.update(self.dt, self.map_system.camera)
+        self.player.update(self.dt)
         self.collision_system.update(self.dt)
 
         # DEBUG
@@ -117,7 +116,8 @@ class Game():
         for enemy in enemy_hits:
             self.player.take_damage(10)
 
-        self.enemies.update()
+        for enemy in self.enemies:
+            enemy.update()
             
         for proj in self.projectiles:
             proj.update(self.dt)
@@ -146,14 +146,14 @@ class Game():
         """
         
         if state != self.game_state:
-            menu = self.menus[self.game_state]
+            menu = self.menus.get(self.game_state)
             if menu:
                 menu.setdown()
             self.game_state = state
             if state == constants.PLAYING:
                 self.setup()
             else:
-                menu = self.menus[self.game_state]
+                menu = self.menus.get(self.game_state)
                 if menu:
                     menu.setup()
 
@@ -178,11 +178,10 @@ class Game():
 
         pygame.quit()
         
-    def check_game_end(self):
-        if not self.collision_system.in_screen_y(self.player):
-            self.change_state(constants.GAME_OVER)
-        
     def draw(self):
+        if self.game_state in [constants.QUIT, constants.GAME_OVER]:
+            return
+        
         if self.game_state == constants.PLAYING:
             self.sky.draw(self.map_system.camera.camera.x)
             self.map_system.draw()
@@ -214,6 +213,7 @@ class Game():
             pygame.draw.rect(self.screen, "yellow", proj.hb, 2)
 
         blit_text(self.screen,
+                  f"fps={int(self.clock.get_fps())}, "
                   f"difficulty={self.game_difficulty}, "
                   f"dynamic_entities={len(self.collision_system.dynamic)}, "
                   f"platforms={len(self.collision_system.platforms)}",

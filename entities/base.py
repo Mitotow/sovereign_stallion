@@ -1,6 +1,7 @@
 import pygame
 from pygame import sprite, Rect, Vector2, transform, Surface
 from core.sprite.spritesheet import Spritesheet
+import core.constants as constants
 from ui.ui_utils import blit_text
 from core.camera import Camera
 
@@ -55,7 +56,7 @@ class Entity(sprite.Sprite):
         
     def show_debug(self, font: pygame.font.Font, camera: Camera):
         rect = camera.apply(self.hb)
-        info_pos = (rect.x + rect.width, rect.topleft[1])
+        info_pos = (rect.x + rect.width + 5, rect.topleft[1])
         pygame.draw.rect(self.screen, "orange", rect, 2)
         blit_text(self.screen, 
                     f"hb_x={rect.x}, hb_y={rect.y}",

@@ -97,10 +97,6 @@ class CollisionSystem:
             entity.is_grounded = True; changed = True
         if changed:
             self._sync_position_from_hb(entity)
-            
-    def in_screen_y(self, entity):
-        h = self.screen.get_height()
-        return entity.hb.bottom > h
 
     def check_hover_dynamic(self, pos: tuple[int, int], camera: Camera) -> Entity | None:
         return next((e for e in self.dynamic if camera.apply(e.hb).collidepoint(pos)), None)

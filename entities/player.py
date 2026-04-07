@@ -35,16 +35,6 @@ class Player(AnimableEntity):
         self.f_jump = -600
         self.is_freeze = False
         self.is_running = False
-        
-        # DASH
-        self.is_dashing = False
-        self.dash_duration = 0.2  # Durée du dash en secondes
-        self.dash_cooldown = 0.5  # Temps de recharge
-        self.dash_timer = 0
-        self.dash_cooldown_timer = 0
-        self.dash_speed = 1000  # Vitesse du dash
-        self.can_dash = True
-        self.dash_direction = 1  # 1 pour droite, -1 pour gauche
 
     def jump(self):
         if self.is_grounded:
@@ -78,8 +68,6 @@ class Player(AnimableEntity):
             self.jump()
         if keys[pygame.K_e]:
             self.heal(100)
-        if keys[pygame.K_LCTRL] and self.can_dash:
-            self.dash()
         self.is_running = keys[pygame.K_LSHIFT] and h_acceleration != 0
 
         return h_acceleration
@@ -92,49 +80,9 @@ class Player(AnimableEntity):
         if h_acceleration != 0:
             self.velocity.x += h_acceleration * dt
         else:
-            self.velocity.x *= (1 - self.friction)
+            self.velocity.x *= (1 - self.friction) ** (dt * constants.FPS)
             if abs(self.velocity.x) < 0.5:
                 self.velocity.x = 0
-                
-    def dash(self):
-        if self.can_dash and not self.is_dashing and not self.is_freeze:
-            self.is_dashing = True
-            self.can_dash = False
-            self.dash_timer = 0
-            self.dash_direction = 1 if self.facing_right else -1
-
-            # Déclenche l'animation de dash
-            self.set_state(constants.DASH)
-
-            # Désactive la gravité pendant le dash
-            self.gravity_enabled = False
-            self.velocity.y = 0
-            
-    def update_dash(self, dt):
-        if self.is_dashing:
-            self.dash_timer += dt
-
-            # Mouvement horizontal pendant le dash
-            self.velocity.x = self.dash_speed * self.dash_direction
-
-            # Fin du dash
-            if self.dash_timer >= self.dash_duration:
-                self.is_dashing = False
-                self.gravity_enabled = True
-                self.velocity.x = 0
-
-                # Retour à l'animation précédente
-                if self.is_grounded:
-                    self.set_state(constants.IDLE)
-                else:
-                    self.set_state(constants.JUMP_FALL)
-
-        # Gestion du cooldown
-        if not self.can_dash:
-            self.dash_cooldown_timer += dt
-            if self.dash_cooldown_timer >= self.dash_cooldown:
-                self.can_dash = True
-                self.dash_cooldown_timer = 0
 
     def update_animation(self):
         """
@@ -176,7 +124,7 @@ class Player(AnimableEntity):
         self.animate(speed_ratio)
 
 
-    def update(self, dt, camera):
+    def update(self, dt):
         keys = pygame.key.get_pressed()
         h_acceleration = self.handle_input(keys)
         
