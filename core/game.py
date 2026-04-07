@@ -1,5 +1,6 @@
 import pygame
 from entities.player import Player
+from entities.enemy import Archer, Knight
 from core.constants import FPS, WINDOW_SIZE, SOLID, TAVERSABLE
 from core.map import load_map
 from world.parallax import ParallaxSky
@@ -37,7 +38,7 @@ class Game():
             constants.LANDING_MENU: LandingMenu(self.screen),
             constants.MAIN_MENU: MainMenu(self.screen),
         }
-        
+
         self.menus[self.game_state].setup()
 
         # Game objects
@@ -48,16 +49,13 @@ class Game():
         self.collision_system = None
         self.sky = None
         self.font = None
-        
+
     def setup_font(self):
         pygame.font.init()
         self.font = pygame.font.SysFont('Arial', 16)
+        self.font_gameover = pygame.font.SysFont('Arial', 64, bold=True)
 
     def create_platforms(self):
-        """
-        Créer les platformes
-        """
-        
         w = self.screen.get_width()
         h = self.screen.get_height()
 
@@ -67,88 +65,80 @@ class Game():
             Platform(self.screen, pygame.Vector2(500, h - 300), (200, 20), SOLID),
             Platform(self.screen, pygame.Vector2(100, h - 450), (150, 20), TAVERSABLE),
         ]
-        
+
         for p in platforms:
             self.collision_system.add_platform(p)
             self.platforms.add(p)
 
     def setup(self):
-        """
-        Initialize game objects
-        """
         self.setup_font()
-        
-        # Récupération de la difficulté dans le menu principal
         self.game_difficulty = self.menus[constants.MAIN_MENU].selected_difficulty
 
         # Joueur
         self.player = Player(self.screen, pygame.Vector2(100, 0))
         self.sprites.add(self.player)
 
-        # Système de collision
         self.collision_system = CollisionSystem(self.screen)
         self.collision_system.add_dynamic(self.player)
 
+        # Ennemis
+        archer_test = Archer(self.screen, pygame.Vector2(900, 200))
+        self.enemies.add(archer_test)
+        self.collision_system.add_dynamic(archer_test)
+
+        knight_test = Knight(self.screen, pygame.Vector2(1200, 200))
+        self.enemies.add(knight_test)
+        self.collision_system.add_dynamic(knight_test)
+
         self.create_platforms()
-        # for platform in load_map("assets/world/maps/map01.csv", self.screen):
-        #    self.collision_system.add_platform(platform)
-        #    self.platforms.add(platform)
-            
         self.sky = ParallaxSky(self.screen)
 
     def handle_playing(self):
-        """
-        Méthode principale de la gestion
-        du jeu
-        """
-        
         self.screen.fill("black")
 
         if not self.player:
+            return
+        if not self.player.is_alive:
+            self.draw_world()
+            # Affichage du message
+            text_surface = self.font_gameover.render("GAME OVER", True, (255, 0, 0))
+            text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0]//2, WINDOW_SIZE[1]//2))
+            self.screen.blit(text_surface, text_rect)
             return
 
         self.player.update(self.dt)
         self.collision_system.update(self.dt)
 
-        # Collisions projectiles vs joueur
-        hits = self.collision_system.check_group_overlap(self.projectiles, [self.player])
-        for projectile, player in hits:
-            player.take_damage(10)
-            projectile.kill()
-            self.collision_system.remove(projectile)
-
-        # Collisions ennemis vs joueur
-        enemy_hits = self.collision_system.check_overlap(self.player, self.enemies)
-        for enemy in enemy_hits:
-            self.player.take_damage(10)
-
-        for enemy in self.enemies:
-            enemy.update(self.dt)
-            
-        for proj in self.projectiles:
+        # 1. Projectiles
+        for proj in self.projectiles.copy():
             proj.update(self.dt)
+            if proj.hb.colliderect(self.player.hb):
+                self.player.take_damage(10)
+                proj.kill()
+                self.collision_system.remove(proj)
+                continue
             if not proj.alive():
                 self.collision_system.remove(proj)
-            
+
+        # 2. Collisions ennemis
+        enemy_hits = self.collision_system.check_overlap(self.player, self.enemies)
+        for enemy in enemy_hits:
+            if isinstance(enemy, Knight):
+                self.player.take_damage(30)
+            else:
+                self.player.take_damage(5 * self.dt)
+
+        # 3. IAs
+        for enemy in self.enemies:
+            enemy.update(self.dt, self)
+
     def handle_menu(self):
-        """
-        Récupère le menu actuel et change
-        le game state en fonction de ce que
-        renvoi le menu
-        """
-        
         current_menu: Menu | None = self.menus[self.game_state]
         if current_menu == None:
             return
         self.change_state(current_menu.update())
-        
+
     def change_state(self, state: str):
-        """
-        Change l'état du jeu si celui-ci
-        est différent. Setup et setdown
-        les menus / setup le jeu.
-        """
-        
         if state != self.game_state:
             menu = self.menus[self.game_state]
             if menu:
@@ -181,22 +171,21 @@ class Game():
             self.dt = self.clock.tick(FPS) / 1000
 
         pygame.quit()
-        
+
+    def draw_world(self):
+        """Regroupe tout le dessin du niveau pour la réutilisation"""
+        self.sky.draw(self.player.rect.x)
+        self.player.draw()
+        for plat in self.platforms: plat.draw()
+        for enemy in self.enemies: enemy.draw()
+        for proj in self.projectiles: proj.draw()
+        self.draw_hearts()
+
     def draw(self):
         if self.game_state == constants.PLAYING:
-            self.sky.draw(self.player.rect.x)
-            
-            self.player.draw()
-            
-            for plat in self.platforms:
-                plat.draw()
+            if self.player and self.player.is_alive:
+                self.draw_world()
 
-            for enemy in self.enemies:
-                enemy.draw()
-
-            for proj in self.projectiles:
-                proj.draw()
-            
             if self.debug_mode and self.font:
                 self.show_debug()
         else:
@@ -205,37 +194,23 @@ class Game():
                 menu.draw()
 
     def show_debug(self):
-        # Hitbox / Rect du joueur
         pygame.draw.rect(self.screen, "red", self.player.hb, 2)
-
-        # Hitbox platformes
         for plat in self.platforms:
             color = "red" if plat.type == SOLID else "blue"
             pygame.draw.rect(self.screen, color, plat.rect, 2)
-
-        # Hitbox ennemis
         for enemy in self.enemies:
             pygame.draw.rect(self.screen, "orange", enemy.hb, 2)
-
-        # Hitbox projectiles
         for proj in self.projectiles:
             pygame.draw.rect(self.screen, "yellow", proj.hb, 2)
 
-        # Information du jeu
-        blit_text(self.screen,
-                  f"pos_x={self.player.rect.x}, pos_y={self.player.rect.y}, "
-                  f"hb_x={self.player.hb.x}, hb_y={self.player.hb.y}",
-                  (0, 0), self.font)
-        blit_text(self.screen,
-                  f"vel_x={self.player.velocity.x:.2f}, vel_y={self.player.velocity.y:.2f}, "
-                  f"is_grounded={self.player.is_grounded}, is_running={self.player.is_running}",
-                  (0, 20), self.font)
-        blit_text(self.screen,
-                  f"current_state={self.player.current_state}, "
-                  f"spritesheet_len={len(self.player.current_animation.frames)}",
-                  (0, 40), self.font)
-        blit_text(self.screen,
-                  f"difficulty={self.game_difficulty}, "
-                  f"dynamic_entities={len(self.collision_system.dynamic)}, "
-                  f"platforms={len(self.collision_system.platforms)}",
-                  (0, 60), self.font)
+    def draw_hearts(self):
+        """Affiche des coeurs en haut à gauche"""
+        for i in range(3):
+            x = 40 + (i * 45)
+            y = 35
+            color = (255, 0, 0) if self.player.hp > (i * 10) else (60, 60, 60)
+            points = [
+                (x, y + 15), (x - 15, y - 5), (x - 8, y - 12),
+                (x, y - 5), (x + 8, y - 12), (x + 15, y - 5)
+            ]
+            pygame.draw.polygon(self.screen, color, points)

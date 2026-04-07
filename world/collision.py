@@ -1,7 +1,6 @@
 import pygame
 from core.constants import SOLID
 
-
 class CollisionSystem:
     """
     Système de collision centralisé.
@@ -11,7 +10,7 @@ class CollisionSystem:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.platforms = pygame.sprite.Group()    # Plateformes
-        self.dynamic = pygame.sprite.Group()      # Entités qui se déplace
+        self.dynamic = pygame.sprite.Group()      # Entités qui se déplacent
 
     def add_platform(self, *platforms):
         self.platforms.add(*platforms)
@@ -20,34 +19,27 @@ class CollisionSystem:
         self.dynamic.add(*entities)
 
     def remove(self, *entities):
+        # On essaie de retirer des deux groupes pour être sûr
         self.platforms.remove(*entities)
         self.dynamic.remove(*entities)
 
     def update(self, dt):
-        """
-        Met à jour la physique et les collisions de toutes
-        les entités dynamiques.
-        """
         for entity in self.dynamic:
             if entity.is_static:
                 continue
             self._apply_physics(entity, dt)
 
     def _apply_physics(self, entity, dt):
-        """
-        Applique gravité + déplacement + résolution de collision
-        pour une seule entité.
-        """
         # Gravité
         if entity.gravity != 0:
             entity.velocity.y += entity.gravity * dt
 
-        # Déplacement horizontal + collision
+        # Déplacement horizontal
         entity.position.x += entity.velocity.x * dt
         entity.apply_position()
         self._resolve_horizontal(entity)
 
-        # Déplacement vertical + collision
+        # Déplacement vertical
         entity.position.y += entity.velocity.y * dt
         entity.apply_position()
         self._resolve_vertical(entity, dt)
@@ -88,7 +80,6 @@ class CollisionSystem:
                 self._sync_position_from_hb(entity)
 
     def _sync_position_from_hb(self, entity):
-        """Recalcule la position de l'entité à partir de la hitbox."""
         offset_x = (entity.rect.width - entity.hb.width) // 2 + entity.hb_x_offset
         entity.position.x = entity.hb.left - offset_x
         entity.position.y = entity.hb.bottom - entity.hb_y_offset
@@ -96,9 +87,14 @@ class CollisionSystem:
 
     def _clamp_to_screen(self, entity):
         """
-        Bloque une entité dans la surface de l'écran
+        Empêche les entités de sortir, SAUF les projectiles.
         """
-        
+        # --- LA CORRECTION EST ICI ---
+        # Si c'est un projectile, on arrête la fonction tout de suite
+        # pour le laisser sortir et être détruit par son propre update()
+        if entity.__class__.__name__ == "Projectile":
+            return
+
         w = self.screen.get_width()
         h = self.screen.get_height()
         changed = False
@@ -125,10 +121,6 @@ class CollisionSystem:
             self._sync_position_from_hb(entity)
 
     def check_overlap(self, entity_a, group) -> list:
-        """
-        Retourne la liste des entités d'un groupe qui chevauchent entity_a
-        """
-        
         hits = []
         for entity_b in group:
             if entity_a is not entity_b and entity_a.hb.colliderect(entity_b.hb):
@@ -136,10 +128,6 @@ class CollisionSystem:
         return hits
 
     def check_group_overlap(self, group_a, group_b) -> list[tuple]:
-        """
-        Retourne les paires (a, b) en collision entre deux groupes
-        """
-        
         collisions = []
         for a in group_a:
             for b in group_b:
