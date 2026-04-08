@@ -3,8 +3,8 @@ from entities.player import Player
 from core.constants import FPS, WINDOW_SIZE
 from entities.enemy import Archer, Knight
 from world.parallax import ParallaxSky
-from world.collision import CollisionSystem
-from world.map import MapSystem
+from core.collision import CollisionSystem
+from core.map import MapSystem
 from ui.landing.intro import IntroCinematic
 from ui.landing.landing_menu import LandingMenu
 from ui.main_menu import MainMenu
@@ -95,6 +95,7 @@ class Game():
 
         if not self.player:
             return
+        
         if not self.player.is_alive:
             self.draw_world()
             # Affichage du message
@@ -104,7 +105,16 @@ class Game():
             return
 
         self.player.update(self.dt)
-        self.collision_system.update(self.dt)
+        col_entity_plats = self.collision_system.update(self.dt)
+        
+        # Handle damage from platforms
+        for collision in col_entity_plats:
+            if collision[0] is self.player:
+                # Récupération du tuple des platformes 
+                # et récupérer la platforme de l'axe x
+                platx = collision[1][0]
+                if platx and platx.damage > 0:
+                    self.player.take_damage(platx.damage)                   
 
         # DEBUG
         if self.debug_mode and pygame.mouse.get_pressed()[0]:
@@ -114,6 +124,7 @@ class Game():
         # Collisions projectiles vs joueur
         hits = self.collision_system.check_group_overlap(self.projectiles, [self.player])
         for projectile, player in hits:
+            if projectile.is_static: continue
             player.take_damage(10)
             projectile.kill()
             self.collision_system.remove(projectile)
@@ -124,8 +135,8 @@ class Game():
             self.player.take_damage(10)
 
         # Projectiles
-        for proj in self.projectiles.copy():
-            proj.update(self.dt)
+        for proj in self.projectiles:
+            proj.update()
             if proj.hb.colliderect(self.player.hb):
                 self.player.take_damage(10)
                 proj.kill()

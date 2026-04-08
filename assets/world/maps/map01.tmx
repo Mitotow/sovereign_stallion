@@ -3,9 +3,16 @@
  <tileset firstgid="1" name="SS tiles" tilewidth="32" tileheight="32" tilecount="1089" columns="33">
   <image source="./textures/basic.png" width="1056" height="1056"/>
  </tileset>
- <!-- <tileset firstgid="1106" source="Castle.tsx"/>
- <tileset firstgid="3666" source="castle 2.tsx"/>
- <tileset firstgid="6226" source="lava.tsx"/> -->
+ <tileset firstgid="1106" name="Castle" tilewidth="32" tileheight="32" tilecount="2560" columns="64">
+  <image source="./textures/PixelPlatformerSet.png" width="2048" height="1280"/>
+ </tileset>
+ <tileset firstgid="3666" name="castle 2" tilewidth="32" tileheight="32" tilecount="2560" columns="64">
+  <image source="./textures/PixelPlatformerSet.png" width="2048" height="1280"/>
+ </tileset>
+ <tileset firstgid="6226" name="lava" tilewidth="32" tileheight="32" tilecount="4" columns="4">
+  <image source="./textures/NicePng_lava.png" width="150" height="32"/>
+ </tileset>
+ <!-- <tileset firstgid="6230" source="ssmapping2.tsx"/> -->
  <tileset firstgid="7319" source="SS_tiles.tsx"/>
  <layer id="2" name="Calque de Tuiles 2" width="700" height="34">
   <data encoding="csv">

@@ -1,6 +1,7 @@
 import pygame
 from entities.projectile import Projectile
 from core.camera import Camera
+import core.constants as constants
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -26,12 +27,10 @@ class Enemy(pygame.sprite.Sprite):
         self.screen.blit(self.image, camera.apply(self.rect))
 
 class Archer(Enemy):
-    """L'ennemi rouge qui tire"""
-
     def __init__(self, screen, position):
         super().__init__(screen, position)
         self.image = pygame.Surface((32, 48))
-        self.image.fill((255, 0, 0))  # ROUGE
+        self.image.fill((255, 0, 0))
         self.rect = self.image.get_rect(topleft=position)
         self.hb = self.rect.copy()
         self.hb_y_offset = self.rect.height
@@ -43,7 +42,7 @@ class Archer(Enemy):
             self.velocity.y += self.gravity * dt
 
         # Tir toutes les 2 secondes
-        if self.attack_timer >= 2.0:
+        if self.attack_timer >= constants.ARCHER_ATTACK_TIMER:
             self.shoot(game)
             self.attack_timer = 0
 
@@ -55,14 +54,12 @@ class Archer(Enemy):
             direction = direction.normalize()
 
         # On crée la flèche
-        arrow = Projectile(self.screen, e_pos, direction * 400)
+        arrow = Projectile(self.screen, e_pos, direction * constants.ARCHER_PROJ_VELOCITY)
         game.projectiles.add(arrow)
         game.collision_system.add_dynamic(arrow)
 
 
 class Knight(Enemy):
-    """L'ennemi noir qui poursuit"""
-
     def __init__(self, screen, position):
         super().__init__(screen, position)
         self.image = pygame.Surface((40, 60))

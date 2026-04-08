@@ -15,37 +15,41 @@ class CollisionSystem:
         self.platforms: list[Platform] = []       # Plateformes
         self.dynamic = pygame.sprite.Group()      # Entités qui se déplace
 
-
     def set_platforms(self, platforms):
         self.platforms = platforms
 
     def add_dynamic(self, *entities):
         self.dynamic.add(*entities)
 
-    def update(self, dt):
+    def update(self, dt) -> list[tuple[Entity, tuple[Platform | None, Platform | None]]]:
+        ret = []
         for entity in self.dynamic:
             if entity.is_static:
                 continue
             self._apply_gravity(entity, dt)
-            self._move_and_resolve(entity, dt)
+            plats = self._move_and_resolve(entity, dt)
+            if plats[0] or plats[1]:
+                ret.append((entity, plats))
+        return ret
 
     def _apply_gravity(self, entity, dt):
         if entity.gravity != 0:
             entity.velocity.y += entity.gravity * dt
 
-    def _move_and_resolve(self, entity, dt):
+    def _move_and_resolve(self, entity, dt) -> tuple[Platform, Platform]:
         # Horizontal
-
         entity.position.x += entity.velocity.x * dt
         entity.apply_position()
-        self._resolve_entity_vs_platforms_x(entity)
+        platx = self._resolve_entity_vs_platforms_x(entity)
 
         # Déplacement vertical
         entity.position.y += entity.velocity.y * dt
         entity.apply_position()
-        self._resolve_entity_vs_platforms_y(entity)
+        platy = self._resolve_entity_vs_platforms_y(entity)
+        
+        return (platx, platy)
 
-    def _resolve_entity_vs_platforms_x(self, entity):
+    def _resolve_entity_vs_platforms_x(self, entity) -> Platform | None:
         for plat in self.platforms:
             if not entity.hb.colliderect(plat.rect):
                 continue
@@ -56,6 +60,8 @@ class CollisionSystem:
                     entity.hb.left = plat.rect.right
                 entity.velocity.x = 0
                 self._sync_position_from_hb(entity)
+                return plat
+        return None
 
     def _resolve_entity_vs_platforms_y(self, entity):
         entity.is_grounded = False
@@ -70,6 +76,8 @@ class CollisionSystem:
                     entity.hb.top = plat.rect.bottom
                 entity.velocity.y = 0
                 self._sync_position_from_hb(entity)
+                return Platform
+        return None
 
     def check_overlap(self, entity_a, group) -> list:
         return [b for b in group if entity_a is not b 

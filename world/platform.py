@@ -8,4 +8,5 @@ class Platform:
         self.type = platform_type
         self.is_static = True
         self.is_solid = True
+        self.damage = 0
         self.velocity = pygame.Vector2(0, 0)
