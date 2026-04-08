@@ -12,3 +12,6 @@ Include/
 # cache
 __pycache__/
 *.py[cod]
+
+Scripts/
+.idea/
