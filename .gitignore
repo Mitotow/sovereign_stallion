@@ -13,5 +13,5 @@ Include/
 __pycache__/
 *.py[cod]
 
-Scripts/
+# Jetbrains
 .idea/
