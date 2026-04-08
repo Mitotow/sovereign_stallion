@@ -1,9 +1,9 @@
 import pygame
 import core.constants as constants
+from ui.menu import Menu
 
-
-class LandingMenu:
-    def __init__(self, screen):
+class LandingMenu(Menu):
+    def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.screen_rect = screen.get_rect()
 
@@ -25,7 +25,15 @@ class LandingMenu:
 
         self.timer = 0
 
+    def setup(self):
+        self.start_music()
+        
+    def setdown(self):
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.fadeout(1000)
+
     def start_music(self):
+        pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.load("assets/audio/musicmenu.mp3")
         pygame.mixer.music.play(-1)
 

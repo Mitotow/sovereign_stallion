@@ -1,6 +1,9 @@
+import pygame
 from pygame import sprite, Rect, Vector2, transform, Surface
 from core.sprite.spritesheet import Spritesheet
-
+import core.constants as constants
+from ui.ui_utils import blit_text
+from core.camera import Camera
 
 class Entity(sprite.Sprite):
     def __init__(self, screen: Surface, position: Vector2, size: tuple,
@@ -31,12 +34,16 @@ class Entity(sprite.Sprite):
 
         self.texture: Surface | None = None
         self.sync_hitbox()
+        self.nb_sauts = 0
+        self.max_sauts = 2
+        self.is_grounded = False
 
     def sync_hitbox(self):
         self.hb_offset = (
             (self.rect.width - self.hb.width) // 2 + self.hb_x_offset,
             self.hb_y_offset
         )
+        
         self.hb.bottomleft = (
             self.rect.bottomleft[0] + self.hb_offset[0],
             self.rect.bottomleft[1] + self.hb_y_offset
@@ -46,7 +53,24 @@ class Entity(sprite.Sprite):
         """Synchronise rect et hitbox avec self.position"""
         self.rect.bottomleft = (self.position.x, self.position.y)
         self.sync_hitbox()
-
+        
+    def _compute_next_debug_line(self, pos: tuple[int, int], font) -> tuple[int, int]:
+        return (pos[0], pos[1] + font.get_height())
+        
+    def show_debug(self, font: pygame.font.Font, camera: Camera):
+        rect = camera.apply(self.hb)
+        info_pos = (rect.x + rect.width + 5, rect.topleft[1])
+        pygame.draw.rect(self.screen, "orange", rect, 2)
+        blit_text(self.screen, 
+                    f"hb_x={rect.x}, hb_y={rect.y}",
+                    info_pos, font)
+        info_pos = self._compute_next_debug_line(info_pos, font)
+        blit_text(self.screen,
+                  f"vel_x={self.velocity.x:.2f}, vel_y={self.velocity.y:.2f}, is_grounded={self.is_grounded}",
+                  info_pos, font)
+        
+        
+        return info_pos
 
 class AnimableEntity(Entity):
     def __init__(self, screen: Surface, position: Vector2, size: tuple, current_state: str,
@@ -62,11 +86,14 @@ class AnimableEntity(Entity):
         self.current_animation = self.animations[self.current_state]
 
     def set_state(self, state: str):
-        if self.current_state and self.current_state == state:
+        if self.is_state(state):
             return
         self.current_state = state
         self.current_animation = self.animations[self.current_state]
         self.frame_index = 0
+        
+    def is_state(self, state: str) -> bool:
+        return self.current_state and self.current_state == state
 
     def animate(self, speed_ratio=1):
         is_ended = self.is_animation_ended()
@@ -81,6 +108,25 @@ class AnimableEntity(Entity):
         if self.facing_right:
             image = transform.flip(image, True, False)
         self.image = transform.scale(image, (self.rect.width, self.rect.height))
+        
+    def draw(self, camera=None):
+        draw_rect = camera.apply(self.rect) if camera else self.rect
+        #self.screen.blit(self.image, (self.rect.x, self.rect.y - self.current_animation.offset_y))
+        self.screen.blit(
+            self.image,
+            (draw_rect.x, draw_rect.y - self.current_animation.offset_y)
+        )
 
     def is_animation_ended(self):
         return int(self.frame_index) >= len(self.current_animation.frames) - 1
+    
+    def show_debug(self, font, camera: Camera):
+        info_pos = super().show_debug(font, camera)
+        info_pos = self._compute_next_debug_line(info_pos, font)
+        blit_text(self.screen,
+                  f"current_state={self.current_state}",
+                  info_pos, font)
+        info_pos = self._compute_next_debug_line(info_pos, font)
+        blit_text(self.screen,
+                  f"spritesheet_len={len(self.current_animation.frames)}",
+                  info_pos, font)
