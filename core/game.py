@@ -99,17 +99,25 @@ class Game():
             self.draw_world()
             # Affichage du message
             text_surface = self.font_gameover.render("GAME OVER", True, (255, 0, 0))
-            text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0]//2, WINDOW_SIZE[1]//2))
+            text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
             self.screen.blit(text_surface, text_rect)
             return
 
+        # 1. Capteurs (Murs)
+        self.player.check_wall_sensors(self.map_system.level_map.collision_rects)
+
+        # 2. Logique des entités (Inputs, IA, Animations)
         self.player.update(self.dt)
+        for enemy in self.enemies:
+            enemy.update(self.dt, self)
+
+        # 3. Physique et Mouvements (APPELÉ UNE SEULE FOIS !)
         self.collision_system.update(self.dt)
 
         # DEBUG
         if self.debug_mode and pygame.mouse.get_pressed()[0]:
             self.debug_entity = self.collision_system.check_hover_dynamic(
-                pygame.mouse.get_pos(),self.map_system.camera)
+                pygame.mouse.get_pos(), self.map_system.camera)
 
         # Collisions projectiles vs joueur
         hits = self.collision_system.check_group_overlap(self.projectiles, [self.player])
@@ -134,9 +142,7 @@ class Game():
             if not proj.alive():
                 self.collision_system.remove(proj)
 
-        for enemy in self.enemies:
-            enemy.update(self.dt, self)
-            
+        # Mise à jour de la caméra
         self.map_system.camera.update(self.player)
 
     def handle_menu(self):
@@ -175,8 +181,10 @@ class Game():
 
             self.draw()
             pygame.display.flip()
-            self.dt = self.clock.tick(FPS) / 1000
 
+            # On calcule le temps et on le bloque à 0.05s max (pour éviter les téléportations)
+            raw_dt = self.clock.tick(FPS) / 1000.0
+            self.dt = min(raw_dt, 0.05)
         pygame.quit()
 
     def draw_world(self):

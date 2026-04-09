@@ -95,14 +95,14 @@ class AnimableEntity(Entity):
     def is_state(self, state: str) -> bool:
         return self.current_state and self.current_state == state
 
-    def animate(self, speed_ratio=1):
+    def animate(self, dt):
         is_ended = self.is_animation_ended()
         if not self.current_animation.loop and is_ended:
             return
         if self.current_animation.loop and is_ended:
             self.frame_index = 0
 
-        self.frame_index += self.current_animation.animation_speed * speed_ratio
+        self.frame_index += self.current_animation.animation_speed * (dt * constants.FPS)
 
         image = self.current_animation.frames[int(self.frame_index)]
         if self.facing_right:
