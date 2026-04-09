@@ -12,15 +12,18 @@ def load_player_animations():
         constants.JUMP_START: Spritesheet("assets/player/JUMP-START.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.JUMP_TRANSITION: Spritesheet("assets/player/JUMP-TRANSITION.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.JUMP_FALL: Spritesheet("assets/player/JUMP-FALL.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
+        constants.JUMP: Spritesheet("assets/player/JUMP.png", 96, 96, 0.2, loop=True, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.ATTACK: Spritesheet("assets/player/ATTACK 1.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.HURT: Spritesheet("assets/player/HURT.png", 96, 96, 0.2, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.HEALING: Spritesheet("assets/player/HEALING.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
         constants.DASH: Spritesheet("assets/player/DASH.png", 96, 96, 0.3, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
-        constants.DEATH: Spritesheet("assets/player/DEATH.png", 96, 96, 0.15, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y)
+        constants.DEATH: Spritesheet("assets/player/DEATH.png", 96, 96, 0.15, loop=False, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
+        constants.DASH: Spritesheet("assets/player/DASH.png", 96, 96, 0.3, loop=True, offset_y=constants.PLAYER_ANIM_OFFSET_Y),
+        constants.WALL_SLIDE: Spritesheet("assets/player/WALL SLIDE.png", 96, 96, 0.1, loop=True, offset_y=constants.PLAYER_ANIM_OFFSET_Y)
     }
 
 
-JUMP_STATES = [constants.JUMP_FALL, constants.JUMP_START, constants.JUMP_TRANSITION]
+JUMP_STATES = [constants.JUMP, constants.JUMP_FALL, constants.JUMP_START, constants.JUMP_TRANSITION]
 
 
 class Player(AnimableEntity):
@@ -48,16 +51,27 @@ class Player(AnimableEntity):
         self.nb_sauts = 0
         self.jump_pressed = False
 
+        # Wall Jump
+        self.wall_slide_speed = 120  # Vitesse max de chute quand on frotte un mur
+        self.wall_jump_force_y = 500  # Force du saut vers le haut
+        self.wall_jump_force_x = 400  # Force de répulsion pour s'écarter du mur
+        self.wall_sensor_range = 5  # Épaisseur de la zone de détection à gauche/droite
+
+        # États des murs
+        self.on_wall_left = False
+        self.on_wall_right = False
+        self.is_wall_sliding = False
+
     def take_damage(self, amount: int):
         # Joueur mort ou ne peut pas prendre de damage
-        if not self.is_alive or not self.can_damage: return
+        if self.is_state(constants.DEATH) or not self.is_alive or not self.can_damage: return
         
         self.hp -= amount
         self.set_state(constants.HURT)
         if self.hp <= 0:
             self.hp = 0
-            self.is_alive = False
             self.is_freeze = True
+            self.set_state(constants.DEATH)
         else:
             self.can_damage = False
             self.damage_cooldown = constants.PLAYER_DAM_COOLDOWN
@@ -74,6 +88,15 @@ class Player(AnimableEntity):
             self.nb_sauts += 1
             self.is_grounded = False
             self.set_state(constants.JUMP_START)
+        elif self.is_wall_sliding or self.on_wall_left or self.on_wall_right:
+            if self.on_wall_left:
+                self.velocity.y = -self.wall_jump_force_y
+                self.velocity.x = self.wall_jump_force_x
+            elif self.on_wall_right:
+                self.velocity.y = -self.wall_jump_force_y
+                self.velocity.x = -self.wall_jump_force_x
+            self.is_wall_sliding = False
+            self.set_state(constants.JUMP)
 
     def attack(self):
         if self.current_state != constants.ATTACK:
@@ -84,12 +107,14 @@ class Player(AnimableEntity):
         h_acceleration = 0
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]: h_acceleration += self.acceleration
         if keys[pygame.K_LEFT] or keys[pygame.K_q]: h_acceleration -= self.acceleration
+        
         if keys[pygame.K_UP] or keys[pygame.K_z]:
             if not self.jump_pressed:
                 self.jump()
                 self.jump_pressed = True
         else:
             self.jump_pressed = False
+            
         if keys[pygame.K_SPACE]: self.attack()
         if keys[pygame.K_e]: self.heal(100)
             
@@ -118,28 +143,55 @@ class Player(AnimableEntity):
             self.animate()
             return
 
-        # Mouvements / Saut
         is_backward = self.velocity.x < 0
         if self.velocity.x != 0: self.facing_right = is_backward
 
-        if not self.is_grounded:
-            # On ne déclenche JUMP_START que si on vient d'un état au sol
-            if self.current_state not in JUMP_STATES:
+        if self.is_wall_sliding:
+            self.set_state(constants.WALL_SLIDE)
+
+            if self.on_wall_left:
+                self.facing_right = False
+            elif self.on_wall_right:
+                self.facing_right = True
+                
+        elif not self.is_grounded:
+            if self.current_state in (constants.IDLE, constants.WALK, constants.RUN):
                 self.set_state(constants.JUMP_START)
             elif self.current_state == constants.JUMP_START and can_change:
                 self.set_state(constants.JUMP_TRANSITION)
             elif self.current_state == constants.JUMP_TRANSITION and can_change:
                 self.set_state(constants.JUMP_FALL)
-        else:
-            # Ground
-            if abs(self.velocity.x) > 0.5:
+        elif self.is_grounded and (can_change or self.current_state in JUMP_STATES):
+            if abs(self.velocity.x) > 0:
                 self.set_state(constants.WALK if not self.is_running else constants.RUN)
             else:
                 self.set_state(constants.IDLE)
-                
         self.animate()
 
-    def update(self, dt):       
+    def check_wall_sensors(self, platforms):
+        # On crée un capteur à gauche et un à droite, légèrement plus petits que la hauteur du joueur
+        # pour éviter de détecter le sol comme un mur.
+        left_sensor = pygame.Rect(self.hb.left - self.wall_sensor_range, self.hb.top + 5,
+                                  self.wall_sensor_range, self.hb.height - 10)
+
+        right_sensor = pygame.Rect(self.hb.right, self.hb.top + 5,
+                                   self.wall_sensor_range, self.hb.height - 10)
+
+        self.on_wall_left = False
+        self.on_wall_right = False
+
+        for plat in platforms:
+            if left_sensor.colliderect(plat.rect):
+                self.on_wall_left = True
+            if right_sensor.colliderect(plat.rect):
+                self.on_wall_right = True
+
+    def update(self, dt):
+        if not self.is_alive:
+            self.velocity.x = 0
+            self.animate(dt)
+            return
+
         if self.is_grounded: self.nb_sauts = 0
         if not self.can_damage:
             self.damage_cooldown -= 1
@@ -159,5 +211,34 @@ class Player(AnimableEntity):
         speed_limit = self.max_speed + (self.speed_run if self.is_running else 0)
         if abs(self.velocity.x) > speed_limit: self.velocity.x = speed_limit * (-1 if self.velocity.x < 0 else 1)
         if self.is_freeze: self.velocity.x = 0
-        
+                
         self.update_animation()
+
+
+        self.is_wall_sliding = False
+
+        # Si on est en l'air et qu'on tombe (vélocité Y positive)
+        if not self.is_grounded and self.velocity.y > 0:
+            # On utilise h_acceleration pour savoir si le joueur POUSSE le joystick vers le mur
+            if (self.on_wall_left and h_acceleration < 0) or (self.on_wall_right and h_acceleration > 0):
+                self.is_wall_sliding = True
+
+        # Si on frotte le mur, on limite la vitesse de chute
+        if self.is_wall_sliding:
+            if self.velocity.y > self.wall_slide_speed:
+                self.velocity.y = self.wall_slide_speed
+
+    def draw(self, camera=None):
+        draw_rect = camera.apply(self.rect) if camera else self.rect
+        offset_x = 0
+
+        if self.is_state(constants.WALL_SLIDE):
+            if self.on_wall_left:
+                offset_x = -16
+            elif self.on_wall_right:
+                offset_x = 16
+
+        self.screen.blit(
+            self.image,
+            (draw_rect.x + offset_x, draw_rect.y - self.current_animation.offset_y)
+        )

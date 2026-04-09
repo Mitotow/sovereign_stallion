@@ -100,11 +100,13 @@ class Game():
             self.draw_world()
             # Affichage du message
             text_surface = self.font_gameover.render("GAME OVER", True, (255, 0, 0))
-            text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0]//2, WINDOW_SIZE[1]//2))
+            text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
             self.screen.blit(text_surface, text_rect)
             return
 
+        self.player.check_wall_sensors(self.map_system.level_map.collision_rects)
         self.player.update(self.dt)
+
         col_entity_plats = self.collision_system.update(self.dt)
         
         # Handle damage from platforms
@@ -116,10 +118,13 @@ class Game():
                 if platx and platx.damage > 0:
                     self.player.take_damage(platx.damage)                   
 
+        for enemy in self.enemies:
+            enemy.update(self.dt, self)
+
         # DEBUG
         if self.debug_mode and pygame.mouse.get_pressed()[0]:
             self.debug_entity = self.collision_system.check_hover_dynamic(
-                pygame.mouse.get_pos(),self.map_system.camera)
+                pygame.mouse.get_pos(), self.map_system.camera)
 
         # Collisions projectiles vs joueur
         hits = self.collision_system.check_group_overlap(self.projectiles, [self.player])
@@ -145,9 +150,7 @@ class Game():
             if not proj.alive():
                 self.collision_system.remove(proj)
 
-        for enemy in self.enemies:
-            enemy.update(self.dt, self)
-            
+        # Mise à jour de la caméra
         self.map_system.camera.update(self.player)
 
     def handle_menu(self):
@@ -187,7 +190,7 @@ class Game():
             self.draw()
             pygame.display.flip()
             self.dt = self.clock.tick(FPS) / 1000
-
+            
         pygame.quit()
 
     def draw_world(self):
@@ -196,9 +199,9 @@ class Game():
         self.sky.draw(cam)
         self.map_system.draw()
         
-        self.player.draw(cam)
         for enemy in self.enemies: enemy.draw(cam)
         for proj in self.projectiles: proj.draw(cam)
+        self.player.draw(cam)
         
         self.draw_hearts()
 
