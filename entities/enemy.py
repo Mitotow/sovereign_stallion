@@ -3,7 +3,9 @@ from entities.projectile import Projectile
 from core.camera import Camera
 import core.constants as constants
 
-
+# Problème avec les sprites donc en attendant on utilise
+# pygame.sprite.Sprite et on gère tout seul le rect affiché
+# même si on devrait utilisé normalement la classe AnimableEntity
 class Enemy(pygame.sprite.Sprite):
     """Classe parente qui contient les fonctions communes"""
 
