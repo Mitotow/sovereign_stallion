@@ -113,10 +113,10 @@ class Game():
         for collision in col_entity_plats:
             if collision[0] is self.player:
                 # Récupération du tuple des platformes 
-                # et récupérer la platforme de l'axe x
+                # et récupérer la platforme de l'axe y
                 platx = collision[1][0]
                 if platx and platx.damage > 0:
-                    self.player.take_damage(platx.damage)                   
+                    self.player.take_damage(platx.damage)                  
 
         for enemy in self.enemies:
             enemy.update(self.dt, self)
@@ -227,7 +227,8 @@ class Game():
             self.debug_entity.show_debug(self.font, cam)
 
         for plat in self.map_system.level_map.collision_rects:
-            pygame.draw.rect(self.screen, "red", cam.apply(plat.rect), 2)
+            color = "red" if plat.type == constants.SOLID else "blue"
+            pygame.draw.rect(self.screen, color, cam.apply(plat.rect), 2)
 
         # Hitbox projectiles
         for proj in self.projectiles:

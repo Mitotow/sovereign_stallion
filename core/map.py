@@ -17,6 +17,12 @@ class ssmap:
         for obj in layer:
             plat = Platform(int(obj.x), int(obj.y), int(obj.width), int(obj.height))
             platforms.append(plat)
+
+        layer = self.tmxdata.get_layer_by_name(constants.LAVA_LAYER)
+        for obj in layer:
+            plat = Platform(int(obj.x), int(obj.y), int(obj.width), int(obj.height), platform_type=constants.TAVERSABLE, damage=30)
+            platforms.append(plat)
+
         return platforms
 
     def render(self, surface):
